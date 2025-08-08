@@ -736,7 +736,8 @@ function simulateBeatReactive() {
   smoothMid += (targetMid - smoothMid) * 0.3;
   smoothHigh += (targetHigh - smoothHigh) * 0.25;
   
-  waveOffset += 0.025; // Continuous wave movement
+  // Optimize wave movement for mobile
+  waveOffset += isMobile ? 0.02 : 0.025; // Slightly slower on mobile for better performance
   
   return {
     bass: smoothBass,
@@ -747,6 +748,8 @@ function simulateBeatReactive() {
 }
 
 function drawWaveform(){
+  if (!canvas || !ctx) return;
+  
   ctx.clearRect(0,0,canvas.width,canvas.height);
   
   // Check if music is playing
@@ -758,7 +761,8 @@ function drawWaveform(){
     
     // Draw multiple waveform lines with improved colors and effects
     const centerY = canvas.height / 2;
-    const numBars = Math.floor(canvas.width / 2.5);
+    // Optimize for mobile performance - reduce complexity on smaller screens
+    const numBars = isMobile ? Math.floor(canvas.width / 4) : Math.floor(canvas.width / 2.5);
     
     // Create gradient for better visual appeal
     const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
@@ -823,8 +827,8 @@ function drawWaveform(){
     }
     ctx.stroke();
     
-    // Enhanced beat indicators with pulsing effect
-    if (beats.bass > 0.2) {
+    // Enhanced beat indicators with pulsing effect (reduced on mobile for performance)
+    if (beats.bass > 0.2 && !isMobile) {
       for (let i = 0; i < 5; i++) {
         const x = (Math.sin(beats.offset + i * 0.5) * 0.4 + 0.5) * canvas.width;
         const y = centerY + (Math.cos(beats.offset * 1.2 + i * 0.3) * 25);
@@ -842,22 +846,24 @@ function drawWaveform(){
       }
     }
     
-    // Add subtle glow effect
-    ctx.shadowColor = 'rgba(255, 107, 157, 0.3)';
-    ctx.shadowBlur = 10;
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = `rgba(255, 107, 157, ${0.1 + beats.bass * 0.1})`;
-    ctx.beginPath();
-    for (let i = 0; i < numBars; i++) {
-      const x = (i / numBars) * canvas.width;
-      const amplitude = 20 + beats.bass * 30;
-      const frequency = 0.005;
-      const y = centerY + Math.sin(beats.offset + i * frequency) * amplitude;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
+    // Add subtle glow effect (simplified on mobile for performance)
+    if (!isMobile) {
+      ctx.shadowColor = 'rgba(255, 107, 157, 0.3)';
+      ctx.shadowBlur = 10;
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = `rgba(255, 107, 157, ${0.1 + beats.bass * 0.1})`;
+      ctx.beginPath();
+      for (let i = 0; i < numBars; i++) {
+        const x = (i / numBars) * canvas.width;
+        const amplitude = 20 + beats.bass * 30;
+        const frequency = 0.005;
+        const y = centerY + Math.sin(beats.offset + i * frequency) * amplitude;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.shadowBlur = 0;
     }
-    ctx.stroke();
-    ctx.shadowBlur = 0;
     
   } else {
     // Enhanced static wave when paused
@@ -889,12 +895,41 @@ function drawWaveform(){
 }
 
 function resizeCanvas(){
-  canvas.width = window.innerWidth;
-  canvas.height = 80;
+  // Get the actual canvas element dimensions from CSS
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+  
+  // Set device pixel ratio for crisp rendering on high-DPI displays
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  
+  // Reset the context after scaling
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
 }
+
+// Initialize canvas properly
+function initializeCanvas() {
+  if (canvas && ctx) {
+    resizeCanvas();
+    drawWaveform();
+  }
+}
+
 window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
-drawWaveform();
+window.addEventListener('orientationchange', () => {
+  // Handle mobile orientation changes
+  setTimeout(resizeCanvas, 100);
+});
+
+// Initialize canvas after DOM is ready
+document.addEventListener('DOMContentLoaded', initializeCanvas);
+if (document.readyState !== 'loading') {
+  initializeCanvas();
+}
 
 // Initialize YouTube API on first user interaction
 if (isMobile) {
