@@ -22,7 +22,9 @@ const hintText = document.getElementById('hintText');
 // Initialize mobile settings after DOM elements are defined
 function initializeMobileSettings() {
   if (isMobile) {
-    hintText.textContent = 'Tap Play & Double-tap for fullscreen';
+    if (hintText) {
+      hintText.textContent = 'Tap Play & Double-tap for fullscreen';
+    }
     // Set volume to full on mobile and hide volume controls
     if (volSlider) {
       volSlider.value = 1;
@@ -32,7 +34,9 @@ function initializeMobileSettings() {
       volBtn.style.display = 'none';
     }
   } else {
-    hintText.textContent = 'Space/K: Play/Pause • ←/→: Previous/Next • M: Menu • F: Fullscreen • ↑/↓: Volume';
+    if (hintText) {
+      hintText.textContent = 'Space/K: Play/Pause • ←/→: Previous/Next • M: Menu • F: Fullscreen • ↑/↓: Volume';
+    }
   }
 }
 let analyser, audioCtx, dataArray, bufferLength;
@@ -52,6 +56,11 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeMobileSettings();
   initializeVolumeControls();
   initializeMobileTouchEvents();
+  
+  // Ensure hint text is set correctly
+  setTimeout(() => {
+    initializeMobileSettings();
+  }, 100);
 });
 
 // Also initialize immediately if DOM is already loaded
@@ -63,6 +72,11 @@ if (document.readyState === 'loading') {
   initializeMobileSettings();
   initializeVolumeControls();
   initializeMobileTouchEvents();
+  
+  // Ensure hint text is set correctly
+  setTimeout(() => {
+    initializeMobileSettings();
+  }, 100);
 }
 
 let player;
