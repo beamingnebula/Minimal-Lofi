@@ -2,6 +2,8 @@
 
 A beautiful, minimalist lofi music player that streams live YouTube radio stations with a reactive waveform visualization.
 
+# Live app: [lofiiplayer](https://lofiiplayer.netlify.app/)
+
 ## Features
 
 - 🎵 **6 Live Lofi Radio Stations** - Curated selection of the best lofi streams

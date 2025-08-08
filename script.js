@@ -1,6 +1,20 @@
 // Radio stations are now loaded from stations.js
 // STATIONS array is defined in stations.js file
 
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+const hintText = document.getElementById('hintText');
+
+// Update hint text based on device type
+if (isMobile) {
+  hintText.textContent = 'Tap Play & Double-tap for fullscreen';
+  // Set volume to full on mobile and hide volume controls
+  volSlider.value = 1;
+  volSlider.style.display = 'none';
+  volBtn.style.display = 'none';
+} else {
+  hintText.textContent = 'Press Play & F for fullscreen';
+}
+
 let currentStationIndex = 0;
 const playBtn = document.getElementById('playBtn');
 const prevBtn = document.getElementById('prevBtn');
@@ -76,7 +90,9 @@ function createPlayer() {
     events: {
       onReady: (e) => {
         isPlayerReady = true;
-        e.target.setVolume(parseFloat(volSlider.value) * 100);
+        // Set volume to full on mobile, otherwise use slider value
+        const volume = isMobile ? 100 : parseFloat(volSlider.value) * 100;
+        e.target.setVolume(volume);
         initAudioAnalysis();
         
         // Auto-play when ready
@@ -262,15 +278,63 @@ function showVolumeSlider() {
   volSlider.style.pointerEvents = 'auto';
   clearTimeout(volumeTimeout);
   
-  // Auto-hide after 3 seconds
-  volumeTimeout = setTimeout(hideVolumeSlider, 3000);
+  // Auto-hide after 3 seconds only on desktop
+  if (!isMobile) {
+    volumeTimeout = setTimeout(hideVolumeSlider, 3000);
+  }
 }
 
-volumeWrap.addEventListener('mouseenter', showVolumeSlider);
+// Desktop hover events
+if (!isMobile) {
+  volumeWrap.addEventListener('mouseenter', showVolumeSlider);
+  volumeWrap.addEventListener('mouseleave', () => {
+    volumeTimeout = setTimeout(hideVolumeSlider, 3000);
+  });
+} else {
+  // On mobile, show slider on first touch and keep it visible
+  volumeWrap.addEventListener('touchstart', (e) => {
+    e.stopPropagation();
+    showVolumeSlider();
+  });
+}
 
-volumeWrap.addEventListener('mouseleave', () => {
-  volumeTimeout = setTimeout(hideVolumeSlider, 3000); // 3 seconds delay
-});
+// Mobile touch events
+if (isMobile) {
+  let volumeTouchActive = false;
+  
+  volumeWrap.addEventListener('touchstart', (e) => {
+    e.stopPropagation(); // Prevent double-tap fullscreen from triggering
+    volumeTouchActive = true;
+    showVolumeSlider();
+  });
+  
+  // Don't auto-hide on mobile - only hide when explicitly dismissed
+  volumeWrap.addEventListener('touchend', (e) => {
+    e.stopPropagation(); // Prevent double-tap fullscreen from triggering
+    volumeTouchActive = false;
+    // Remove auto-hide timeout for mobile
+  });
+  
+  // Also handle touch on the slider itself
+  volSlider.addEventListener('touchstart', (e) => {
+    e.stopPropagation(); // Prevent double-tap fullscreen from triggering
+    volumeTouchActive = true;
+    showVolumeSlider();
+  });
+  
+  volSlider.addEventListener('touchend', (e) => {
+    e.stopPropagation(); // Prevent double-tap fullscreen from triggering
+    volumeTouchActive = false;
+    // Remove auto-hide timeout for mobile
+  });
+  
+  // Keep slider visible while interacting with it
+  volSlider.addEventListener('input', (e) => {
+    if (isMobile) {
+      showVolumeSlider(); // Keep it visible while adjusting
+    }
+  });
+}
 
 // Hide slider when volume button is clicked
 volBtn.addEventListener('click', hideVolumeSlider);
@@ -282,14 +346,73 @@ document.addEventListener('click', (e) => {
   }
 });
 
+// Touch outside to hide on mobile
+if (isMobile) {
+  document.addEventListener('touchstart', (e) => {
+    if (!volumeWrap.contains(e.target) && volSlider.style.opacity === '1') {
+      hideVolumeSlider();
+    }
+  });
+}
+
 volSlider.addEventListener('input', (e) => {
-  if (player && player.setVolume) player.setVolume(parseFloat(e.target.value) * 100);
+  if (player && player.setVolume && !isMobile) {
+    player.setVolume(parseFloat(e.target.value) * 100);
+  }
 });
+// Fullscreen functionality
 window.addEventListener('keydown', (e) => {
   if (e.key.toLowerCase() === 'f') {
     if (!document.fullscreenElement) document.documentElement.requestFullscreen();
     else document.exitFullscreen();
   }
+});
+
+// Double-tap fullscreen for mobile devices
+let lastTap = 0;
+let tapCount = 0;
+let tapTimer;
+
+document.addEventListener('touchstart', (e) => {
+  // Don't trigger fullscreen if touching volume controls
+  if (volumeWrap.contains(e.target) || volSlider.contains(e.target)) {
+    return;
+  }
+  
+  const currentTime = new Date().getTime();
+  const tapLength = currentTime - lastTap;
+  
+  if (tapLength < 500 && tapLength > 0) {
+    // Double tap detected
+    tapCount++;
+    clearTimeout(tapTimer);
+    
+    if (tapCount === 2) {
+      // Double tap confirmed
+      e.preventDefault();
+      
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.log('Fullscreen request failed:', err);
+        });
+      } else {
+        document.exitFullscreen().catch(err => {
+          console.log('Exit fullscreen failed:', err);
+        });
+      }
+      
+      tapCount = 0;
+    }
+  } else {
+    tapCount = 1;
+  }
+  
+  lastTap = currentTime;
+  
+  // Reset tap count after a delay
+  tapTimer = setTimeout(() => {
+    tapCount = 0;
+  }, 500);
 });
 
 // Beat detection simulation variables with smoother animation

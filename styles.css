@@ -24,9 +24,9 @@ canvas#waveform{
   transform:translateY(-50%);
   margin-left:15px;
   width:120px;
-  height:6px;
+  height:8px;
   background:rgba(0,0,0,0.1);
-  border-radius:3px;
+  border-radius:4px;
   outline:none;
   opacity:0;
   pointer-events:none;
@@ -34,25 +34,28 @@ canvas#waveform{
   -webkit-appearance:none;
   appearance:none;
   display:block;
+  touch-action:manipulation;
 }
 .volSlider::-webkit-slider-thumb{
   -webkit-appearance:none;
   appearance:none;
-  width:16px;
-  height:16px;
+  width:20px;
+  height:20px;
   background:#111;
   border-radius:50%;
   cursor:pointer;
   box-shadow:0 2px 4px rgba(0,0,0,0.2);
+  touch-action:manipulation;
 }
 .volSlider::-moz-range-thumb{
-  width:16px;
-  height:16px;
+  width:20px;
+  height:20px;
   background:#111;
   border-radius:50%;
   cursor:pointer;
   border:none;
   box-shadow:0 2px 4px rgba(0,0,0,0.2);
+  touch-action:manipulation;
 }
 /* Volume slider visibility now handled by JavaScript */
 .title{font-size:14px;opacity:0.95;z-index:2}
@@ -217,4 +220,92 @@ button.reset{all:unset}
 .station-credit .github-link svg {
   width: 14px;
   height: 14px;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+  .volSlider {
+    display: none !important;
+  }
+  
+  .volumeWrap {
+    display: none !important;
+  }
+  
+  canvas#waveform {
+    bottom: 40px;
+    height: 60px;
+  }
+  
+  .controls {
+    gap: 20px;
+  }
+  
+  .icon {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .icon.small {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .menu-toggle {
+    width: 36px;
+    height: 36px;
+    top: 15px;
+    left: 15px;
+  }
+  
+  .station-menu {
+    top: 60px;
+    left: 15px;
+    min-width: 250px;
+  }
+  
+  .station-item {
+    padding: 10px 0;
+    font-size: 13px;
+  }
+  
+  .title {
+    font-size: 13px;
+  }
+  
+  .hint {
+    font-size: 11px;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .volumeWrap {
+    min-height: 44px;
+    min-width: 44px;
+    z-index: 100;
+  }
+  
+  .volSlider {
+    touch-action: pan-x;
+    z-index: 101;
+  }
+  
+  .icon {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Ensure volume controls are always accessible on mobile */
+  .volumeWrap:hover .volSlider,
+  .volumeWrap:focus-within .volSlider {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  
+  /* Keep volume slider visible once shown on mobile */
+  .volSlider[style*="opacity: 1"] {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
 }
