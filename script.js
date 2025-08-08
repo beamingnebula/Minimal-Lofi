@@ -5,18 +5,6 @@
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
                  (navigator.maxTouchPoints && navigator.maxTouchPoints > 2) ||
                  window.innerWidth <= 768;
-const hintText = document.getElementById('hintText');
-
-// Update hint text based on device type
-if (isMobile) {
-  hintText.textContent = 'Tap Play & Double-tap for fullscreen';
-  // Set volume to full on mobile and hide volume controls
-  volSlider.value = 1;
-  volSlider.style.display = 'none';
-  volBtn.style.display = 'none';
-} else {
-  hintText.textContent = 'Press Play & F for fullscreen';
-}
 
 let currentStationIndex = 0;
 const playBtn = document.getElementById('playBtn');
@@ -29,6 +17,24 @@ const menuToggle = document.getElementById('menuToggle');
 const stationMenu = document.getElementById('stationMenu');
 const canvas = document.getElementById('waveform');
 const ctx = canvas.getContext('2d');
+const hintText = document.getElementById('hintText');
+
+// Initialize mobile settings after DOM elements are defined
+function initializeMobileSettings() {
+  if (isMobile) {
+    hintText.textContent = 'Tap Play & Double-tap for fullscreen';
+    // Set volume to full on mobile and hide volume controls
+    if (volSlider) {
+      volSlider.value = 1;
+      volSlider.style.display = 'none';
+    }
+    if (volBtn) {
+      volBtn.style.display = 'none';
+    }
+  } else {
+    hintText.textContent = 'Space/K: Play/Pause • ←/→: Previous/Next • M: Menu • F: Fullscreen • ↑/↓: Volume';
+  }
+}
 let analyser, audioCtx, dataArray, bufferLength;
 let isAudioInitialized = false;
 
@@ -40,9 +46,12 @@ function renderPlayIcon(isPlaying){
   }
 }
 
-// Initialize play button icon after DOM is loaded
+// Initialize everything after DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
   renderPlayIcon(false);
+  initializeMobileSettings();
+  initializeVolumeControls();
+  initializeMobileTouchEvents();
 });
 
 // Also initialize immediately if DOM is already loaded
@@ -51,6 +60,9 @@ if (document.readyState === 'loading') {
 } else {
   // DOM is already loaded, initialize immediately
   renderPlayIcon(false);
+  initializeMobileSettings();
+  initializeVolumeControls();
+  initializeMobileTouchEvents();
 }
 
 let player;
@@ -328,36 +340,44 @@ nextBtn.addEventListener('click', () => {
 });
 
 // Add touch events for navigation buttons on mobile
-if (isMobile) {
-  prevBtn.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    prevBtn.style.transform = 'scale(0.95)';
-    setTimeout(() => {
-      prevBtn.style.transform = '';
-    }, 150);
-    changeStation('prev');
-  });
-  
-  nextBtn.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    nextBtn.style.transform = 'scale(0.95)';
-    setTimeout(() => {
-      nextBtn.style.transform = '';
-    }, 150);
-    changeStation('next');
-  });
-  
-  menuToggle.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    menuToggle.style.transform = 'scale(0.95)';
-    setTimeout(() => {
-      menuToggle.style.transform = '';
-    }, 150);
-    toggleMenu();
-  });
+function initializeMobileTouchEvents() {
+  if (isMobile) {
+    if (prevBtn) {
+      prevBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        prevBtn.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+          prevBtn.style.transform = '';
+        }, 150);
+        changeStation('prev');
+      });
+    }
+    
+    if (nextBtn) {
+      nextBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        nextBtn.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+          nextBtn.style.transform = '';
+        }, 150);
+        changeStation('next');
+      });
+    }
+    
+    if (menuToggle) {
+      menuToggle.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        menuToggle.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+          menuToggle.style.transform = '';
+        }, 150);
+        toggleMenu();
+      });
+    }
+  }
 }
 
 menuToggle.addEventListener('click', () => {
@@ -392,82 +412,92 @@ function showVolumeSlider() {
   }
 }
 
-// Desktop hover events
-if (!isMobile) {
-  volumeWrap.addEventListener('mouseenter', showVolumeSlider);
-  volumeWrap.addEventListener('mouseleave', () => {
-    volumeTimeout = setTimeout(hideVolumeSlider, 3000);
-  });
-} else {
-  // On mobile, show slider on first touch and keep it visible
-  volumeWrap.addEventListener('touchstart', (e) => {
-    e.stopPropagation();
-    showVolumeSlider();
-  });
-}
-
-// Mobile touch events
-if (isMobile) {
-  let volumeTouchActive = false;
+// Initialize volume controls only if elements exist
+function initializeVolumeControls() {
+  const volumeWrap = document.querySelector('.volumeWrap');
   
-  volumeWrap.addEventListener('touchstart', (e) => {
-    e.stopPropagation(); // Prevent double-tap fullscreen from triggering
-    volumeTouchActive = true;
-    showVolumeSlider();
-  });
-  
-  // Don't auto-hide on mobile - only hide when explicitly dismissed
-  volumeWrap.addEventListener('touchend', (e) => {
-    e.stopPropagation(); // Prevent double-tap fullscreen from triggering
-    volumeTouchActive = false;
-    // Remove auto-hide timeout for mobile
-  });
-  
-  // Also handle touch on the slider itself
-  volSlider.addEventListener('touchstart', (e) => {
-    e.stopPropagation(); // Prevent double-tap fullscreen from triggering
-    volumeTouchActive = true;
-    showVolumeSlider();
-  });
-  
-  volSlider.addEventListener('touchend', (e) => {
-    e.stopPropagation(); // Prevent double-tap fullscreen from triggering
-    volumeTouchActive = false;
-    // Remove auto-hide timeout for mobile
-  });
-  
-  // Keep slider visible while interacting with it
-  volSlider.addEventListener('input', (e) => {
-    if (isMobile) {
-      showVolumeSlider(); // Keep it visible while adjusting
-    }
-  });
-}
-
-// Hide slider when volume button is clicked
-volBtn.addEventListener('click', hideVolumeSlider);
-
-// Hide slider when clicking outside
-document.addEventListener('click', (e) => {
-  if (!volumeWrap.contains(e.target) && volSlider.style.opacity === '1') {
-    hideVolumeSlider();
+  if (!volumeWrap || !volSlider || !volBtn) {
+    console.log('Volume controls not found, skipping initialization');
+    return;
   }
-});
+  
+  // Desktop hover events
+  if (!isMobile) {
+    volumeWrap.addEventListener('mouseenter', showVolumeSlider);
+    volumeWrap.addEventListener('mouseleave', () => {
+      volumeTimeout = setTimeout(hideVolumeSlider, 3000);
+    });
+  } else {
+    // On mobile, show slider on first touch and keep it visible
+    volumeWrap.addEventListener('touchstart', (e) => {
+      e.stopPropagation();
+      showVolumeSlider();
+    });
+  }
 
-// Touch outside to hide on mobile
-if (isMobile) {
-  document.addEventListener('touchstart', (e) => {
+  // Mobile touch events
+  if (isMobile) {
+    let volumeTouchActive = false;
+    
+    volumeWrap.addEventListener('touchstart', (e) => {
+      e.stopPropagation(); // Prevent double-tap fullscreen from triggering
+      volumeTouchActive = true;
+      showVolumeSlider();
+    });
+    
+    // Don't auto-hide on mobile - only hide when explicitly dismissed
+    volumeWrap.addEventListener('touchend', (e) => {
+      e.stopPropagation(); // Prevent double-tap fullscreen from triggering
+      volumeTouchActive = false;
+      // Remove auto-hide timeout for mobile
+    });
+    
+    // Also handle touch on the slider itself
+    volSlider.addEventListener('touchstart', (e) => {
+      e.stopPropagation(); // Prevent double-tap fullscreen from triggering
+      volumeTouchActive = true;
+      showVolumeSlider();
+    });
+    
+    volSlider.addEventListener('touchend', (e) => {
+      e.stopPropagation(); // Prevent double-tap fullscreen from triggering
+      volumeTouchActive = false;
+      // Remove auto-hide timeout for mobile
+    });
+    
+    // Keep slider visible while interacting with it
+    volSlider.addEventListener('input', (e) => {
+      if (isMobile) {
+        showVolumeSlider(); // Keep it visible while adjusting
+      }
+    });
+  }
+
+  // Hide slider when volume button is clicked
+  volBtn.addEventListener('click', hideVolumeSlider);
+
+  // Hide slider when clicking outside
+  document.addEventListener('click', (e) => {
     if (!volumeWrap.contains(e.target) && volSlider.style.opacity === '1') {
       hideVolumeSlider();
     }
   });
-}
 
-volSlider.addEventListener('input', (e) => {
-  if (player && player.setVolume && !isMobile) {
-    player.setVolume(parseFloat(e.target.value) * 100);
+  // Touch outside to hide on mobile
+  if (isMobile) {
+    document.addEventListener('touchstart', (e) => {
+      if (!volumeWrap.contains(e.target) && volSlider.style.opacity === '1') {
+        hideVolumeSlider();
+      }
+    });
   }
-});
+
+  volSlider.addEventListener('input', (e) => {
+    if (player && player.setVolume && !isMobile) {
+      player.setVolume(parseFloat(e.target.value) * 100);
+    }
+  });
+}
 // Keyboard shortcuts
 window.addEventListener('keydown', (e) => {
   // Prevent shortcuts when typing in input fields
