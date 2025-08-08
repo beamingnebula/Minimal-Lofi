@@ -296,6 +296,19 @@ button.reset{all:unset}
     min-width: 44px;
   }
   
+  /* Ensure play button is clearly visible on mobile */
+  #playBtn {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+  }
+  
+  #playBtn:active {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(0.95);
+  }
+  
   /* Ensure volume controls are always accessible on mobile */
   .volumeWrap:hover .volSlider,
   .volumeWrap:focus-within .volSlider {

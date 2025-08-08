@@ -30,11 +30,25 @@ let analyser, audioCtx, dataArray, bufferLength;
 let isAudioInitialized = false;
 
 function renderPlayIcon(isPlaying){
-  playBtn.innerHTML = isPlaying
-    ? '<svg viewBox="0 0 24 24" width="30" height="30"><rect x="6.75" y="5.25" width="2.6" height="13.5" rx="0.6" fill="#111"></rect><rect x="14.75" y="5.25" width="2.6" height="13.5" rx="0.6" fill="#111"></rect></svg>'
-    : '<svg viewBox="0 0 24 24" width="30" height="30"><path d="M5.25 5.25l13.5 6.75-13.5 6.75V5.25z" fill="#111"></path></svg>';
+  if (playBtn) {
+    playBtn.innerHTML = isPlaying
+      ? '<svg viewBox="0 0 24 24" width="30" height="30"><rect x="6.75" y="5.25" width="2.6" height="13.5" rx="0.6" fill="#111"></rect><rect x="14.75" y="5.25" width="2.6" height="13.5" rx="0.6" fill="#111"></rect></svg>'
+      : '<svg viewBox="0 0 24 24" width="30" height="30"><path d="M5.25 5.25l13.5 6.75-13.5 6.75V5.25z" fill="#111"></path></svg>';
+  }
 }
-renderPlayIcon(false);
+
+// Initialize play button icon after DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  renderPlayIcon(false);
+});
+
+// Also initialize immediately if DOM is already loaded
+if (document.readyState === 'loading') {
+  // DOM is still loading, wait for DOMContentLoaded
+} else {
+  // DOM is already loaded, initialize immediately
+  renderPlayIcon(false);
+}
 
 let player;
 let isPlayerReady = false;
@@ -228,6 +242,25 @@ function toggleMenu(force) {
 }
 
 playBtn.addEventListener('click', () => {
+  if (!player) {
+    loadYT();
+    return;
+  }
+  
+  if (!isPlayerReady) {
+    // Player is still loading, set flag to play when ready
+    shouldAutoPlay = true;
+    return;
+  }
+  
+  const state = player.getPlayerState();
+  if (state !== 1) player.playVideo(); // 1 = PLAYING
+  else player.pauseVideo();
+});
+
+// Add touch event for mobile devices
+playBtn.addEventListener('touchstart', (e) => {
+  e.preventDefault(); // Prevent double-tap zoom
   if (!player) {
     loadYT();
     return;
