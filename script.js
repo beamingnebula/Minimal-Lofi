@@ -1,6 +1,9 @@
 // Radio stations are now loaded from stations.js
 // STATIONS array is defined in stations.js file
 
+// Production optimizations
+const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+
 // More reliable mobile detection
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
                  (navigator.maxTouchPoints && navigator.maxTouchPoints > 2) ||
@@ -93,7 +96,9 @@ function loadYT(){
   tag.src = 'https://www.youtube.com/iframe_api';
   tag.onerror = () => {
     titleElement.textContent = 'Failed to load YouTube API';
-    console.error('Failed to load YouTube API');
+    if (!isProduction) {
+      console.error('Failed to load YouTube API');
+    }
   };
   document.body.appendChild(tag);
   window.onYouTubeIframeAPIReady = onYouTubeAPIReady;
@@ -165,7 +170,9 @@ function createPlayer() {
           }, 500);
         } else {
           // On mobile, unmute and play when user interacts
-          console.log('Mobile player ready - waiting for user interaction');
+          if (!isProduction) {
+            console.log('Mobile player ready - waiting for user interaction');
+          }
         }
       },
       onStateChange: (e) => {
@@ -186,7 +193,9 @@ function createPlayer() {
         }
       },
       onError: (e) => {
-        console.log('YouTube player error:', e.data);
+        if (!isProduction) {
+          console.log('YouTube player error:', e.data);
+        }
         // Handle errors gracefully
         if (e.data === 150 || e.data === 101) {
           // Video not available or embedding disabled
@@ -459,7 +468,9 @@ function initializeVolumeControls() {
   const volumeWrap = document.querySelector('.volumeWrap');
   
   if (!volumeWrap || !volSlider || !volBtn) {
-    console.log('Volume controls not found, skipping initialization');
+    if (!isProduction) {
+      console.log('Volume controls not found, skipping initialization');
+    }
     return;
   }
   
