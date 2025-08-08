@@ -1,4 +1,4 @@
-html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;overflow:hidden}
+html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;overflow:hidden;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 .root{
   min-height:100vh;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -98,17 +98,25 @@ canvas#waveform{
   
   /* Show mobile hint, hide desktop hint */
   .hint:not(.mobile-hint) {
-    display: none;
+    display: none !important;
   }
   
   .mobile-hint {
-    display: block;
+    display: block !important;
+    opacity: 0.8 !important;
+    visibility: visible !important;
   }
 }
 .title{font-size:14px;opacity:0.95;z-index:2}
 #player{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden}
 .hint{font-size:12px;opacity:0.9;z-index:2}
 button.reset{all:unset}
+* {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
 .icon:focus{outline:none}
 .icon:active{transform:scale(0.95)}
 .menu-toggle{
