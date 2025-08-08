@@ -35,7 +35,7 @@ function initializeMobileSettings() {
     }
   } else {
     if (hintText) {
-      hintText.textContent = 'Space/K: Play/Pause • ←/→: Previous/Next • M: Menu • F: Fullscreen • ↑/↓: Volume';
+      hintText.textContent = 'Press Play & F for fullscreen';
     }
   }
 }
@@ -82,6 +82,7 @@ if (document.readyState === 'loading') {
 let player;
 let isPlayerReady = false;
 let shouldAutoPlay = false;
+let hasUserInteracted = false; // Track if user has interacted on mobile
 function loadYT(){
   if (window.YT && window.YT.Player) return onYouTubeAPIReady();
   
@@ -146,7 +147,8 @@ function createPlayer() {
       modestbranding: 1, 
       playsinline: 1,
       rel: 0,
-      showinfo: 0
+      showinfo: 0,
+      mute: isMobile ? 1 : 0 // Start muted on mobile to allow playback
     },
     events: {
       onReady: (e) => {
@@ -161,6 +163,9 @@ function createPlayer() {
           setTimeout(() => {
             e.target.playVideo();
           }, 500);
+        } else {
+          // On mobile, unmute and play when user interacts
+          console.log('Mobile player ready - waiting for user interaction');
         }
       },
       onStateChange: (e) => {
@@ -170,6 +175,14 @@ function createPlayer() {
         }
         if (e.data === 2 || e.data === 0) { // YT.PlayerState.PAUSED || YT.PlayerState.ENDED
           renderPlayIcon(false);
+        }
+        
+        // Handle shouldAutoPlay flag for mobile
+        if (shouldAutoPlay && isPlayerReady && isMobile && hasUserInteracted) {
+          shouldAutoPlay = false;
+          player.unMute();
+          player.setVolume(100);
+          player.playVideo();
         }
       },
       onError: (e) => {
@@ -311,8 +324,17 @@ playBtn.addEventListener('click', () => {
   }
   
   const state = player.getPlayerState();
-  if (state !== 1) player.playVideo(); // 1 = PLAYING
-  else player.pauseVideo();
+  if (state !== 1) {
+    // On mobile, unmute first then play
+    if (isMobile) {
+      hasUserInteracted = true;
+      player.unMute();
+      player.setVolume(100);
+    }
+    player.playVideo(); // 1 = PLAYING
+  } else {
+    player.pauseVideo();
+  }
 });
 
 // Add touch event for mobile devices
@@ -339,6 +361,12 @@ playBtn.addEventListener('touchstart', (e) => {
   
   const state = player.getPlayerState();
   if (state !== 1) {
+    // On mobile, unmute first then play
+    if (isMobile) {
+      hasUserInteracted = true;
+      player.unMute();
+      player.setVolume(100);
+    }
     player.playVideo(); // 1 = PLAYING
   } else {
     player.pauseVideo();
