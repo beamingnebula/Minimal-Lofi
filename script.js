@@ -393,11 +393,115 @@ volSlider.addEventListener('input', (e) => {
     player.setVolume(parseFloat(e.target.value) * 100);
   }
 });
-// Fullscreen functionality
+// Keyboard shortcuts
 window.addEventListener('keydown', (e) => {
-  if (e.key.toLowerCase() === 'f') {
-    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-    else document.exitFullscreen();
+  // Prevent shortcuts when typing in input fields
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+    return;
+  }
+  
+  const key = e.key.toLowerCase();
+  
+  // Play/Pause - Space or K
+  if (key === ' ' || key === 'k') {
+    e.preventDefault();
+    if (playBtn) {
+      // Add visual feedback
+      playBtn.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        playBtn.style.transform = '';
+      }, 150);
+      playBtn.click();
+    }
+  }
+  
+  // Previous track - Left arrow or J
+  else if (key === 'arrowleft' || key === 'j') {
+    e.preventDefault();
+    if (prevBtn) {
+      // Add visual feedback
+      prevBtn.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        prevBtn.style.transform = '';
+      }, 150);
+      prevBtn.click();
+    }
+  }
+  
+  // Next track - Right arrow or L
+  else if (key === 'arrowright' || key === 'l') {
+    e.preventDefault();
+    if (nextBtn) {
+      // Add visual feedback
+      nextBtn.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        nextBtn.style.transform = '';
+      }, 150);
+      nextBtn.click();
+    }
+  }
+  
+  // Toggle menu - M
+  else if (key === 'm') {
+    e.preventDefault();
+    if (menuToggle) {
+      // Add visual feedback
+      menuToggle.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        menuToggle.style.transform = '';
+      }, 150);
+      menuToggle.click();
+    }
+  }
+  
+  // Volume up - Up arrow or +/= (without shift)
+  else if (key === 'arrowup' || key === '=') {
+    e.preventDefault();
+    if (volSlider && !isMobile) {
+      const currentVol = parseFloat(volSlider.value);
+      const newVol = Math.min(1, currentVol + 0.1);
+      volSlider.value = newVol;
+      volSlider.dispatchEvent(new Event('input'));
+    }
+  }
+  
+  // Volume down - Down arrow or -
+  else if (key === 'arrowdown' || key === '-') {
+    e.preventDefault();
+    if (volSlider && !isMobile) {
+      const currentVol = parseFloat(volSlider.value);
+      const newVol = Math.max(0, currentVol - 0.1);
+      volSlider.value = newVol;
+      volSlider.dispatchEvent(new Event('input'));
+    }
+  }
+  
+  // Fullscreen - F
+  else if (key === 'f') {
+    e.preventDefault();
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.log('Fullscreen request failed:', err);
+      });
+    } else {
+      document.exitFullscreen().catch(err => {
+        console.log('Exit fullscreen failed:', err);
+      });
+    }
+  }
+  
+  // Mute/Unmute - 0
+  else if (key === '0') {
+    e.preventDefault();
+    if (volSlider && !isMobile) {
+      if (volSlider.value > 0) {
+        volSlider.dataset.lastVolume = volSlider.value;
+        volSlider.value = 0;
+      } else {
+        volSlider.value = volSlider.dataset.lastVolume || 0.6;
+      }
+      volSlider.dispatchEvent(new Event('input'));
+    }
   }
 });
 

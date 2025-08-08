@@ -64,6 +64,7 @@ canvas#waveform{
 button.reset{all:unset}
 .icon:focus{outline:none}
 .icon:active{transform:scale(0.95)}
+.icon{transition:transform 0.15s ease}
 .menu-toggle{
   position:fixed;top:20px;left:20px;z-index:10;
   width:40px;height:40px;

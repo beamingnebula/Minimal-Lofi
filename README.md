@@ -11,7 +11,7 @@ A beautiful, minimalist lofi music player that streams live YouTube radio statio
 - 🎛️ **Simple Controls** - Play/pause, previous/next, volume control
 - 📱 **Responsive Design** - Works on desktop and mobile
 - 🌙 **Minimalist UI** - Clean, distraction-free interface
-- ⌨️ **Keyboard Shortcuts** - Press 'F' for fullscreen
+- ⌨️ **Keyboard Shortcuts** - Full keyboard control (Space/K for play, arrows for navigation, etc.)
 
 ## Radio Stations (via lofi girl)
 
@@ -44,12 +44,22 @@ Lofi/
 
 ## Controls
 
-- **Play/Pause**: Center button or spacebar
+### Mouse/Touch Controls
+- **Play/Pause**: Center button
 - **Previous Station**: Left arrow button
 - **Next Station**: Right arrow button
 - **Volume**: Speaker icon (click to show slider)
 - **Station Menu**: Top-left chevron icon
-- **Fullscreen**: Press 'F' key
+
+### Keyboard Shortcuts
+- **Space** or **K**: Play/Pause
+- **←** (Left Arrow) or **J**: Previous Station
+- **→** (Right Arrow) or **L**: Next Station
+- **M**: Toggle Station Menu
+- **F**: Toggle Fullscreen
+- **↑** (Up Arrow) or **=**: Volume Up
+- **↓** (Down Arrow) or **-**: Volume Down
+- **0**: Mute/Unmute (remembers previous volume)
 
 ## Technical Details
 
