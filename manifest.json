@@ -1,0 +1,47 @@
+{
+  "name": "Minimal Lofi Player",
+  "short_name": "Lofi Player",
+  "description": "Beats to study and chill - A minimal lofi music player",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffeb3b",
+  "theme_color": "#ffeb3b",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["music", "entertainment", "productivity"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='30' fill='%23ff6b9d' stroke='%23c44569' stroke-width='2'/><circle cx='22' cy='24' r='3' fill='%23fff'/><circle cx='42' cy='24' r='3' fill='%23fff'/><path d='M20 40 Q32 50 44 40' stroke='%23fff' stroke-width='3' fill='none' stroke-linecap='round'/><path d='M15 15 Q25 10 35 15 Q45 20 55 15' stroke='%23fff' stroke-width='2' fill='none' stroke-linecap='round' opacity='0.7'/><path d='M10 30 Q20 25 30 30 Q40 35 50 30' stroke='%23fff' stroke-width='2' fill='none' stroke-linecap='round' opacity='0.5'/></svg>",
+      "sizes": "64x64",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><circle cx='96' cy='96' r='90' fill='%23ff6b9d' stroke='%23c44569' stroke-width='6'/><circle cx='66' cy='72' r='9' fill='%23fff'/><circle cx='126' cy='72' r='9' fill='%23fff'/><path d='M60 120 Q96 150 132 120' stroke='%23fff' stroke-width='9' fill='none' stroke-linecap='round'/><path d='M45 45 Q75 30 105 45 Q135 60 165 45' stroke='%23fff' stroke-width='6' fill='none' stroke-linecap='round' opacity='0.7'/><path d='M30 90 Q60 75 90 90 Q120 105 150 90' stroke='%23fff' stroke-width='6' fill='none' stroke-linecap='round' opacity='0.5'/></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><circle cx='256' cy='256' r='240' fill='%23ff6b9d' stroke='%23c44569' stroke-width='16'/><circle cx='176' cy='192' r='24' fill='%23fff'/><circle cx='336' cy='192' r='24' fill='%23fff'/><path d='M160 320 Q256 400 352 320' stroke='%23fff' stroke-width='24' fill='none' stroke-linecap='round'/><path d='M120 120 Q200 80 280 120 Q360 160 440 120' stroke='%23fff' stroke-width='16' fill='none' stroke-linecap='round' opacity='0.7'/><path d='M80 240 Q160 200 240 240 Q320 280 400 240' stroke='%23fff' stroke-width='16' fill='none' stroke-linecap='round' opacity='0.5'/></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Play/Pause",
+      "short_name": "Play",
+      "description": "Toggle play/pause",
+      "url": "/?action=play",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='30' fill='%23ff6b9d' stroke='%23c44569' stroke-width='2'/><path d='M20 24l24 8-24 8V24z' fill='%23fff'/></svg>",
+          "sizes": "64x64"
+        }
+      ]
+    }
+  ]
+}

@@ -106,6 +106,19 @@ canvas#waveform{
     opacity: 0.8 !important;
     visibility: visible !important;
   }
+  
+  /* Fix fullscreen status bar on mobile */
+  :fullscreen {
+    background: radial-gradient(circle, #fecfef 0%, #ffeb3b 100%);
+  }
+  
+  :-webkit-full-screen {
+    background: radial-gradient(circle, #fecfef 0%, #ffeb3b 100%);
+  }
+  
+  :-moz-full-screen {
+    background: radial-gradient(circle, #fecfef 0%, #ffeb3b 100%);
+  }
 }
 .title{font-size:14px;opacity:0.95;z-index:2}
 #player{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden}
