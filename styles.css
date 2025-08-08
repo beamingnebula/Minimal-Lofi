@@ -56,10 +56,53 @@ canvas#waveform{
 }
 /* Volume slider visibility now handled by JavaScript */
 
-/* Hide volume controls on mobile */
+/* Mobile-specific styles */
 @media (max-width: 768px) {
   .volumeWrap {
     display: none !important;
+  }
+  
+  /* Center and space buttons properly on mobile */
+  .controls {
+    gap: 20px;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 0 20px;
+  }
+  
+  /* Make buttons slightly smaller on mobile */
+  .icon {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .icon.small {
+    width: 40px;
+    height: 40px;
+  }
+  
+  /* Move waveform higher on mobile */
+  canvas#waveform {
+    bottom: 120px;
+    height: 60px;
+  }
+  
+  /* Update hint text for mobile */
+  .hint {
+    font-size: 11px;
+    opacity: 0.8;
+    text-align: center;
+    margin-top: 10px;
+  }
+  
+  /* Show mobile hint, hide desktop hint */
+  .hint:not(.mobile-hint) {
+    display: none;
+  }
+  
+  .mobile-hint {
+    display: block;
   }
 }
 .title{font-size:14px;opacity:0.95;z-index:2}
@@ -224,4 +267,9 @@ button.reset{all:unset}
 .station-credit .github-link svg {
   width: 14px;
   height: 14px;
+}
+
+/* Hide mobile hint on desktop */
+.mobile-hint {
+  display: none;
 }

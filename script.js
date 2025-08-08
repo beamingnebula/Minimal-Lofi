@@ -534,4 +534,27 @@ window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 drawWaveform();
 
+// Double-tap to fullscreen for mobile
+let lastTap = 0;
+let tapCount = 0;
+
+document.addEventListener('touchstart', (e) => {
+  const currentTime = new Date().getTime();
+  const tapLength = currentTime - lastTap;
+  
+  if (tapLength < 500 && tapLength > 0) {
+    // Double tap detected
+    e.preventDefault();
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+    tapCount = 0;
+  } else {
+    tapCount = 1;
+  }
+  lastTap = currentTime;
+});
+
 window.addEventListener('pointerdown', () => loadYT(), {once:true});
