@@ -1,14 +1,6 @@
 // Radio stations are now loaded from stations.js
 // STATIONS array is defined in stations.js file
 
-// Production optimizations
-const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-
-// More reliable mobile detection
-const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-                 (navigator.maxTouchPoints && navigator.maxTouchPoints > 2) ||
-                 window.innerWidth <= 768;
-
 let currentStationIndex = 0;
 const playBtn = document.getElementById('playBtn');
 const prevBtn = document.getElementById('prevBtn');
@@ -20,86 +12,23 @@ const menuToggle = document.getElementById('menuToggle');
 const stationMenu = document.getElementById('stationMenu');
 const canvas = document.getElementById('waveform');
 const ctx = canvas.getContext('2d');
-const hintText = document.getElementById('hintText');
-
-// Initialize mobile settings after DOM elements are defined
-function initializeMobileSettings() {
-  if (isMobile) {
-    if (hintText) {
-      hintText.textContent = 'Tap Play & Double-tap for fullscreen';
-    }
-    // Set volume to full on mobile and hide volume controls
-    if (volSlider) {
-      volSlider.value = 1;
-      volSlider.style.display = 'none';
-    }
-    if (volBtn) {
-      volBtn.style.display = 'none';
-    }
-  } else {
-    if (hintText) {
-      hintText.textContent = 'Press Play & F for fullscreen';
-    }
-  }
-}
 let analyser, audioCtx, dataArray, bufferLength;
 let isAudioInitialized = false;
 
 function renderPlayIcon(isPlaying){
-  if (playBtn) {
-    playBtn.innerHTML = isPlaying
-      ? '<svg viewBox="0 0 24 24" width="30" height="30"><rect x="6.75" y="5.25" width="2.6" height="13.5" rx="0.6" fill="#111"></rect><rect x="14.75" y="5.25" width="2.6" height="13.5" rx="0.6" fill="#111"></rect></svg>'
-      : '<svg viewBox="0 0 24 24" width="30" height="30"><path d="M5.25 5.25l13.5 6.75-13.5 6.75V5.25z" fill="#111"></path></svg>';
-  }
+  playBtn.innerHTML = isPlaying
+    ? '<svg viewBox="0 0 24 24" width="30" height="30"><rect x="6.75" y="5.25" width="2.6" height="13.5" rx="0.6" fill="#111"></rect><rect x="14.75" y="5.25" width="2.6" height="13.5" rx="0.6" fill="#111"></rect></svg>'
+    : '<svg viewBox="0 0 24 24" width="30" height="30"><path d="M5.25 5.25l13.5 6.75-13.5 6.75V5.25z" fill="#111"></path></svg>';
 }
-
-// Initialize everything after DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-  renderPlayIcon(false);
-  initializeMobileSettings();
-  initializeVolumeControls();
-  initializeMobileTouchEvents();
-  
-  // Ensure hint text is set correctly
-  setTimeout(() => {
-    initializeMobileSettings();
-  }, 100);
-});
-
-// Also initialize immediately if DOM is already loaded
-if (document.readyState === 'loading') {
-  // DOM is still loading, wait for DOMContentLoaded
-} else {
-  // DOM is already loaded, initialize immediately
-  renderPlayIcon(false);
-  initializeMobileSettings();
-  initializeVolumeControls();
-  initializeMobileTouchEvents();
-  
-  // Ensure hint text is set correctly
-  setTimeout(() => {
-    initializeMobileSettings();
-  }, 100);
-}
+renderPlayIcon(false);
 
 let player;
 let isPlayerReady = false;
 let shouldAutoPlay = false;
-let hasUserInteracted = false; // Track if user has interacted on mobile
 function loadYT(){
   if (window.YT && window.YT.Player) return onYouTubeAPIReady();
-  
-  // Show loading state
-  titleElement.textContent = 'Loading...';
-  
   const tag = document.createElement('script');
   tag.src = 'https://www.youtube.com/iframe_api';
-  tag.onerror = () => {
-    titleElement.textContent = 'Failed to load YouTube API';
-    if (!isProduction) {
-      console.error('Failed to load YouTube API');
-    }
-  };
   document.body.appendChild(tag);
   window.onYouTubeIframeAPIReady = onYouTubeAPIReady;
 }
@@ -140,40 +69,20 @@ function createPlayer() {
   titleElement.textContent = `Playing: ${currentStation.name}`;
   isPlayerReady = false;
   
-  // Mobile browsers require user interaction before autoplay
-  const autoplayValue = isMobile ? 0 : 1;
-  
   player = new YT.Player('player', {
     height: '1', width: '1',
     videoId: currentStation.id,
-    playerVars: { 
-      autoplay: autoplayValue, 
-      controls: 0, 
-      modestbranding: 1, 
-      playsinline: 1,
-      rel: 0,
-      showinfo: 0,
-      mute: isMobile ? 1 : 0 // Start muted on mobile to allow playback
-    },
+    playerVars: { autoplay: 1, controls: 0, modestbranding: 1, playsinline: 1 },
     events: {
       onReady: (e) => {
         isPlayerReady = true;
-        // Set volume to full on mobile, otherwise use slider value
-        const volume = isMobile ? 100 : parseFloat(volSlider.value) * 100;
-        e.target.setVolume(volume);
+        e.target.setVolume(parseFloat(volSlider.value) * 100);
         initAudioAnalysis();
         
-        // Only auto-play on desktop (mobile requires user interaction)
-        if (!isMobile) {
-          setTimeout(() => {
-            e.target.playVideo();
-          }, 500);
-        } else {
-          // On mobile, unmute and play when user interacts
-          if (!isProduction) {
-            console.log('Mobile player ready - waiting for user interaction');
-          }
-        }
+        // Auto-play when ready
+        setTimeout(() => {
+          e.target.playVideo();
+        }, 500);
       },
       onStateChange: (e) => {
         if (e.data === 1) { // YT.PlayerState.PLAYING
@@ -182,24 +91,6 @@ function createPlayer() {
         }
         if (e.data === 2 || e.data === 0) { // YT.PlayerState.PAUSED || YT.PlayerState.ENDED
           renderPlayIcon(false);
-        }
-        
-        // Handle shouldAutoPlay flag for mobile
-        if (shouldAutoPlay && isPlayerReady && isMobile && hasUserInteracted) {
-          shouldAutoPlay = false;
-          player.unMute();
-          player.setVolume(100);
-          player.playVideo();
-        }
-      },
-      onError: (e) => {
-        if (!isProduction) {
-          console.log('YouTube player error:', e.data);
-        }
-        // Handle errors gracefully
-        if (e.data === 150 || e.data === 101) {
-          // Video not available or embedding disabled
-          titleElement.textContent = 'Station temporarily unavailable';
         }
       }
     }
@@ -333,53 +224,8 @@ playBtn.addEventListener('click', () => {
   }
   
   const state = player.getPlayerState();
-  if (state !== 1) {
-    // On mobile, unmute first then play
-    if (isMobile) {
-      hasUserInteracted = true;
-      player.unMute();
-      player.setVolume(100);
-    }
-    player.playVideo(); // 1 = PLAYING
-  } else {
-    player.pauseVideo();
-  }
-});
-
-// Add touch event for mobile devices
-playBtn.addEventListener('touchstart', (e) => {
-  e.preventDefault(); // Prevent double-tap zoom
-  e.stopPropagation(); // Prevent other touch events
-  
-  // Add visual feedback
-  playBtn.style.transform = 'scale(0.95)';
-  setTimeout(() => {
-    playBtn.style.transform = '';
-  }, 150);
-  
-  if (!player) {
-    loadYT();
-    return;
-  }
-  
-  if (!isPlayerReady) {
-    // Player is still loading, set flag to play when ready
-    shouldAutoPlay = true;
-    return;
-  }
-  
-  const state = player.getPlayerState();
-  if (state !== 1) {
-    // On mobile, unmute first then play
-    if (isMobile) {
-      hasUserInteracted = true;
-      player.unMute();
-      player.setVolume(100);
-    }
-    player.playVideo(); // 1 = PLAYING
-  } else {
-    player.pauseVideo();
-  }
+  if (state !== 1) player.playVideo(); // 1 = PLAYING
+  else player.pauseVideo();
 });
 
 prevBtn.addEventListener('click', () => {
@@ -389,47 +235,6 @@ prevBtn.addEventListener('click', () => {
 nextBtn.addEventListener('click', () => {
   changeStation('next');
 });
-
-// Add touch events for navigation buttons on mobile
-function initializeMobileTouchEvents() {
-  if (isMobile) {
-    if (prevBtn) {
-      prevBtn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        prevBtn.style.transform = 'scale(0.95)';
-        setTimeout(() => {
-          prevBtn.style.transform = '';
-        }, 150);
-        changeStation('prev');
-      });
-    }
-    
-    if (nextBtn) {
-      nextBtn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        nextBtn.style.transform = 'scale(0.95)';
-        setTimeout(() => {
-          nextBtn.style.transform = '';
-        }, 150);
-        changeStation('next');
-      });
-    }
-    
-    if (menuToggle) {
-      menuToggle.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        menuToggle.style.transform = 'scale(0.95)';
-        setTimeout(() => {
-          menuToggle.style.transform = '';
-        }, 150);
-        toggleMenu();
-      });
-    }
-  }
-}
 
 menuToggle.addEventListener('click', () => {
   toggleMenu();
@@ -457,257 +262,79 @@ function showVolumeSlider() {
   volSlider.style.pointerEvents = 'auto';
   clearTimeout(volumeTimeout);
   
-  // Auto-hide after 3 seconds only on desktop
-  if (!isMobile) {
-    volumeTimeout = setTimeout(hideVolumeSlider, 3000);
-  }
+  // Auto-hide after 3 seconds
+  volumeTimeout = setTimeout(hideVolumeSlider, 3000);
 }
 
-// Initialize volume controls only if elements exist
-function initializeVolumeControls() {
-  const volumeWrap = document.querySelector('.volumeWrap');
-  
-  if (!volumeWrap || !volSlider || !volBtn) {
-    if (!isProduction) {
-      console.log('Volume controls not found, skipping initialization');
-    }
-    return;
-  }
-  
-  // Desktop hover events
-  if (!isMobile) {
-    volumeWrap.addEventListener('mouseenter', showVolumeSlider);
-    volumeWrap.addEventListener('mouseleave', () => {
-      volumeTimeout = setTimeout(hideVolumeSlider, 3000);
-    });
-  } else {
-    // On mobile, show slider on first touch and keep it visible
-    volumeWrap.addEventListener('touchstart', (e) => {
-      e.stopPropagation();
-      showVolumeSlider();
-    });
-  }
+volumeWrap.addEventListener('mouseenter', showVolumeSlider);
 
-  // Mobile touch events
-  if (isMobile) {
-    let volumeTouchActive = false;
-    
-    volumeWrap.addEventListener('touchstart', (e) => {
-      e.stopPropagation(); // Prevent double-tap fullscreen from triggering
-      volumeTouchActive = true;
-      showVolumeSlider();
-    });
-    
-    // Don't auto-hide on mobile - only hide when explicitly dismissed
-    volumeWrap.addEventListener('touchend', (e) => {
-      e.stopPropagation(); // Prevent double-tap fullscreen from triggering
-      volumeTouchActive = false;
-      // Remove auto-hide timeout for mobile
-    });
-    
-    // Also handle touch on the slider itself
-    volSlider.addEventListener('touchstart', (e) => {
-      e.stopPropagation(); // Prevent double-tap fullscreen from triggering
-      volumeTouchActive = true;
-      showVolumeSlider();
-    });
-    
-    volSlider.addEventListener('touchend', (e) => {
-      e.stopPropagation(); // Prevent double-tap fullscreen from triggering
-      volumeTouchActive = false;
-      // Remove auto-hide timeout for mobile
-    });
-    
-    // Keep slider visible while interacting with it
-    volSlider.addEventListener('input', (e) => {
-      if (isMobile) {
-        showVolumeSlider(); // Keep it visible while adjusting
-      }
-    });
-  }
+volumeWrap.addEventListener('mouseleave', () => {
+  volumeTimeout = setTimeout(hideVolumeSlider, 3000); // 3 seconds delay
+});
 
-  // Hide slider when volume button is clicked
-  volBtn.addEventListener('click', hideVolumeSlider);
+// Hide slider when volume button is clicked
+volBtn.addEventListener('click', hideVolumeSlider);
 
-  // Hide slider when clicking outside
-  document.addEventListener('click', (e) => {
-    if (!volumeWrap.contains(e.target) && volSlider.style.opacity === '1') {
-      hideVolumeSlider();
-    }
-  });
-
-  // Touch outside to hide on mobile
-  if (isMobile) {
-    document.addEventListener('touchstart', (e) => {
-      if (!volumeWrap.contains(e.target) && volSlider.style.opacity === '1') {
-        hideVolumeSlider();
-      }
-    });
-  }
-
-  volSlider.addEventListener('input', (e) => {
-    if (player && player.setVolume && !isMobile) {
-      player.setVolume(parseFloat(e.target.value) * 100);
-    }
-  });
-}
-// Keyboard shortcuts
-window.addEventListener('keydown', (e) => {
-  // Prevent shortcuts when typing in input fields
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-    return;
-  }
-  
-  const key = e.key.toLowerCase();
-  
-  // Play/Pause - Space or K
-  if (key === ' ' || key === 'k') {
-    e.preventDefault();
-    if (playBtn) {
-      // Add visual feedback
-      playBtn.style.transform = 'scale(0.95)';
-      setTimeout(() => {
-        playBtn.style.transform = '';
-      }, 150);
-      playBtn.click();
-    }
-  }
-  
-  // Previous track - Left arrow or J
-  else if (key === 'arrowleft' || key === 'j') {
-    e.preventDefault();
-    if (prevBtn) {
-      // Add visual feedback
-      prevBtn.style.transform = 'scale(0.95)';
-      setTimeout(() => {
-        prevBtn.style.transform = '';
-      }, 150);
-      prevBtn.click();
-    }
-  }
-  
-  // Next track - Right arrow or L
-  else if (key === 'arrowright' || key === 'l') {
-    e.preventDefault();
-    if (nextBtn) {
-      // Add visual feedback
-      nextBtn.style.transform = 'scale(0.95)';
-      setTimeout(() => {
-        nextBtn.style.transform = '';
-      }, 150);
-      nextBtn.click();
-    }
-  }
-  
-  // Toggle menu - M
-  else if (key === 'm') {
-    e.preventDefault();
-    if (menuToggle) {
-      // Add visual feedback
-      menuToggle.style.transform = 'scale(0.95)';
-      setTimeout(() => {
-        menuToggle.style.transform = '';
-      }, 150);
-      menuToggle.click();
-    }
-  }
-  
-  // Volume up - Up arrow or +/= (without shift)
-  else if (key === 'arrowup' || key === '=') {
-    e.preventDefault();
-    if (volSlider && !isMobile) {
-      const currentVol = parseFloat(volSlider.value);
-      const newVol = Math.min(1, currentVol + 0.1);
-      volSlider.value = newVol;
-      volSlider.dispatchEvent(new Event('input'));
-    }
-  }
-  
-  // Volume down - Down arrow or -
-  else if (key === 'arrowdown' || key === '-') {
-    e.preventDefault();
-    if (volSlider && !isMobile) {
-      const currentVol = parseFloat(volSlider.value);
-      const newVol = Math.max(0, currentVol - 0.1);
-      volSlider.value = newVol;
-      volSlider.dispatchEvent(new Event('input'));
-    }
-  }
-  
-  // Fullscreen - F
-  else if (key === 'f') {
-    e.preventDefault();
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(err => {
-        console.log('Fullscreen request failed:', err);
-      });
-    } else {
-      document.exitFullscreen().catch(err => {
-        console.log('Exit fullscreen failed:', err);
-      });
-    }
-  }
-  
-  // Mute/Unmute - 0
-  else if (key === '0') {
-    e.preventDefault();
-    if (volSlider && !isMobile) {
-      if (volSlider.value > 0) {
-        volSlider.dataset.lastVolume = volSlider.value;
-        volSlider.value = 0;
-      } else {
-        volSlider.value = volSlider.dataset.lastVolume || 0.6;
-      }
-      volSlider.dispatchEvent(new Event('input'));
-    }
+// Hide slider when clicking outside
+document.addEventListener('click', (e) => {
+  if (!volumeWrap.contains(e.target) && volSlider.style.opacity === '1') {
+    hideVolumeSlider();
   }
 });
 
-// Double-tap fullscreen for mobile devices
-let lastTap = 0;
-let tapCount = 0;
-let tapTimer;
-
-document.addEventListener('touchstart', (e) => {
-  // Don't trigger fullscreen if touching volume controls
-  if (volumeWrap.contains(e.target) || volSlider.contains(e.target)) {
-    return;
+volSlider.addEventListener('input', (e) => {
+  if (player && player.setVolume) player.setVolume(parseFloat(e.target.value) * 100);
+});
+window.addEventListener('keydown', (e) => {
+  // Prevent default behavior for our shortcuts
+  if ([' ', 'k', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'f'].includes(e.key.toLowerCase())) {
+    e.preventDefault();
   }
   
-  const currentTime = new Date().getTime();
-  const tapLength = currentTime - lastTap;
+  // Fullscreen toggle
+  if (e.key.toLowerCase() === 'f') {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  }
   
-  if (tapLength < 500 && tapLength > 0) {
-    // Double tap detected
-    tapCount++;
-    clearTimeout(tapTimer);
-    
-    if (tapCount === 2) {
-      // Double tap confirmed
-      e.preventDefault();
-      
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(err => {
-          console.log('Fullscreen request failed:', err);
-        });
-      } else {
-        document.exitFullscreen().catch(err => {
-          console.log('Exit fullscreen failed:', err);
-        });
-      }
-      
-      tapCount = 0;
+  // Play/Pause - Space or K
+  if (e.key.toLowerCase() === ' ' || e.key.toLowerCase() === 'k') {
+    if (!player) {
+      loadYT();
+      return;
     }
-  } else {
-    tapCount = 1;
+    
+    if (!isPlayerReady) {
+      shouldAutoPlay = true;
+      return;
+    }
+    
+    const state = player.getPlayerState();
+    if (state !== 1) player.playVideo(); // 1 = PLAYING
+    else player.pauseVideo();
   }
   
-  lastTap = currentTime;
+  // Volume controls - Arrow Up/Down
+  if (e.key.toLowerCase() === 'arrowup') {
+    const newVolume = Math.min(1, parseFloat(volSlider.value) + 0.1);
+    volSlider.value = newVolume;
+    if (player && player.setVolume) player.setVolume(newVolume * 100);
+  }
   
-  // Reset tap count after a delay
-  tapTimer = setTimeout(() => {
-    tapCount = 0;
-  }, 500);
+  if (e.key.toLowerCase() === 'arrowdown') {
+    const newVolume = Math.max(0, parseFloat(volSlider.value) - 0.1);
+    volSlider.value = newVolume;
+    if (player && player.setVolume) player.setVolume(newVolume * 100);
+  }
+  
+  // Station navigation - Arrow Left/Right
+  if (e.key.toLowerCase() === 'arrowleft') {
+    changeStation('prev');
+  }
+  
+  if (e.key.toLowerCase() === 'arrowright') {
+    changeStation('next');
+  }
 });
 
 // Beat detection simulation variables with smoother animation
@@ -747,8 +374,7 @@ function simulateBeatReactive() {
   smoothMid += (targetMid - smoothMid) * 0.3;
   smoothHigh += (targetHigh - smoothHigh) * 0.25;
   
-  // Optimize wave movement for mobile
-  waveOffset += isMobile ? 0.02 : 0.025; // Slightly slower on mobile for better performance
+  waveOffset += 0.025; // Continuous wave movement
   
   return {
     bass: smoothBass,
@@ -759,8 +385,6 @@ function simulateBeatReactive() {
 }
 
 function drawWaveform(){
-  if (!canvas || !ctx) return;
-  
   ctx.clearRect(0,0,canvas.width,canvas.height);
   
   // Check if music is playing
@@ -772,8 +396,7 @@ function drawWaveform(){
     
     // Draw multiple waveform lines with improved colors and effects
     const centerY = canvas.height / 2;
-    // Optimize for mobile performance - reduce complexity on smaller screens
-    const numBars = isMobile ? Math.floor(canvas.width / 4) : Math.floor(canvas.width / 2.5);
+    const numBars = Math.floor(canvas.width / 2.5);
     
     // Create gradient for better visual appeal
     const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
@@ -838,8 +461,8 @@ function drawWaveform(){
     }
     ctx.stroke();
     
-    // Enhanced beat indicators with pulsing effect (reduced on mobile for performance)
-    if (beats.bass > 0.2 && !isMobile) {
+    // Enhanced beat indicators with pulsing effect
+    if (beats.bass > 0.2) {
       for (let i = 0; i < 5; i++) {
         const x = (Math.sin(beats.offset + i * 0.5) * 0.4 + 0.5) * canvas.width;
         const y = centerY + (Math.cos(beats.offset * 1.2 + i * 0.3) * 25);
@@ -857,24 +480,22 @@ function drawWaveform(){
       }
     }
     
-    // Add subtle glow effect (simplified on mobile for performance)
-    if (!isMobile) {
-      ctx.shadowColor = 'rgba(255, 107, 157, 0.3)';
-      ctx.shadowBlur = 10;
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = `rgba(255, 107, 157, ${0.1 + beats.bass * 0.1})`;
-      ctx.beginPath();
-      for (let i = 0; i < numBars; i++) {
-        const x = (i / numBars) * canvas.width;
-        const amplitude = 20 + beats.bass * 30;
-        const frequency = 0.005;
-        const y = centerY + Math.sin(beats.offset + i * frequency) * amplitude;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-      ctx.shadowBlur = 0;
+    // Add subtle glow effect
+    ctx.shadowColor = 'rgba(255, 107, 157, 0.3)';
+    ctx.shadowBlur = 10;
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = `rgba(255, 107, 157, ${0.1 + beats.bass * 0.1})`;
+    ctx.beginPath();
+    for (let i = 0; i < numBars; i++) {
+      const x = (i / numBars) * canvas.width;
+      const amplitude = 20 + beats.bass * 30;
+      const frequency = 0.005;
+      const y = centerY + Math.sin(beats.offset + i * frequency) * amplitude;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
     }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
     
   } else {
     // Enhanced static wave when paused
@@ -906,54 +527,11 @@ function drawWaveform(){
 }
 
 function resizeCanvas(){
-  // Get the actual canvas element dimensions from CSS
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width;
-  canvas.height = rect.height;
-  
-  // Set device pixel ratio for crisp rendering on high-DPI displays
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = rect.width * dpr;
-  canvas.height = rect.height * dpr;
-  ctx.scale(dpr, dpr);
-  
-  // Reset the context after scaling
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
+  canvas.width = window.innerWidth;
+  canvas.height = 80;
 }
-
-// Initialize canvas properly
-function initializeCanvas() {
-  if (canvas && ctx) {
-    resizeCanvas();
-    drawWaveform();
-  }
-}
-
 window.addEventListener('resize', resizeCanvas);
-window.addEventListener('orientationchange', () => {
-  // Handle mobile orientation changes
-  setTimeout(resizeCanvas, 100);
-});
+resizeCanvas();
+drawWaveform();
 
-// Initialize canvas after DOM is ready
-document.addEventListener('DOMContentLoaded', initializeCanvas);
-if (document.readyState !== 'loading') {
-  initializeCanvas();
-}
-
-// Initialize YouTube API on first user interaction
-if (isMobile) {
-  // On mobile, wait for user interaction before loading YouTube API
-  const initOnInteraction = () => {
-    loadYT();
-    document.removeEventListener('touchstart', initOnInteraction);
-    document.removeEventListener('click', initOnInteraction);
-  };
-  
-  document.addEventListener('touchstart', initOnInteraction, { once: true });
-  document.addEventListener('click', initOnInteraction, { once: true });
-} else {
-  // On desktop, load immediately
-  window.addEventListener('pointerdown', () => loadYT(), {once:true});
-}
+window.addEventListener('pointerdown', () => loadYT(), {once:true});
