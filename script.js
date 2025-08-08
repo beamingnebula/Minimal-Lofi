@@ -1,7 +1,10 @@
 // Radio stations are now loaded from stations.js
 // STATIONS array is defined in stations.js file
 
-const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+// More reliable mobile detection
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                 (navigator.maxTouchPoints && navigator.maxTouchPoints > 2) ||
+                 window.innerWidth <= 768;
 const hintText = document.getElementById('hintText');
 
 // Update hint text based on device type
@@ -55,8 +58,16 @@ let isPlayerReady = false;
 let shouldAutoPlay = false;
 function loadYT(){
   if (window.YT && window.YT.Player) return onYouTubeAPIReady();
+  
+  // Show loading state
+  titleElement.textContent = 'Loading...';
+  
   const tag = document.createElement('script');
   tag.src = 'https://www.youtube.com/iframe_api';
+  tag.onerror = () => {
+    titleElement.textContent = 'Failed to load YouTube API';
+    console.error('Failed to load YouTube API');
+  };
   document.body.appendChild(tag);
   window.onYouTubeIframeAPIReady = onYouTubeAPIReady;
 }
@@ -97,10 +108,20 @@ function createPlayer() {
   titleElement.textContent = `Playing: ${currentStation.name}`;
   isPlayerReady = false;
   
+  // Mobile browsers require user interaction before autoplay
+  const autoplayValue = isMobile ? 0 : 1;
+  
   player = new YT.Player('player', {
     height: '1', width: '1',
     videoId: currentStation.id,
-    playerVars: { autoplay: 1, controls: 0, modestbranding: 1, playsinline: 1 },
+    playerVars: { 
+      autoplay: autoplayValue, 
+      controls: 0, 
+      modestbranding: 1, 
+      playsinline: 1,
+      rel: 0,
+      showinfo: 0
+    },
     events: {
       onReady: (e) => {
         isPlayerReady = true;
@@ -109,10 +130,12 @@ function createPlayer() {
         e.target.setVolume(volume);
         initAudioAnalysis();
         
-        // Auto-play when ready
-        setTimeout(() => {
-          e.target.playVideo();
-        }, 500);
+        // Only auto-play on desktop (mobile requires user interaction)
+        if (!isMobile) {
+          setTimeout(() => {
+            e.target.playVideo();
+          }, 500);
+        }
       },
       onStateChange: (e) => {
         if (e.data === 1) { // YT.PlayerState.PLAYING
@@ -121,6 +144,14 @@ function createPlayer() {
         }
         if (e.data === 2 || e.data === 0) { // YT.PlayerState.PAUSED || YT.PlayerState.ENDED
           renderPlayIcon(false);
+        }
+      },
+      onError: (e) => {
+        console.log('YouTube player error:', e.data);
+        // Handle errors gracefully
+        if (e.data === 150 || e.data === 101) {
+          // Video not available or embedding disabled
+          titleElement.textContent = 'Station temporarily unavailable';
         }
       }
     }
@@ -261,6 +292,14 @@ playBtn.addEventListener('click', () => {
 // Add touch event for mobile devices
 playBtn.addEventListener('touchstart', (e) => {
   e.preventDefault(); // Prevent double-tap zoom
+  e.stopPropagation(); // Prevent other touch events
+  
+  // Add visual feedback
+  playBtn.style.transform = 'scale(0.95)';
+  setTimeout(() => {
+    playBtn.style.transform = '';
+  }, 150);
+  
   if (!player) {
     loadYT();
     return;
@@ -273,8 +312,11 @@ playBtn.addEventListener('touchstart', (e) => {
   }
   
   const state = player.getPlayerState();
-  if (state !== 1) player.playVideo(); // 1 = PLAYING
-  else player.pauseVideo();
+  if (state !== 1) {
+    player.playVideo(); // 1 = PLAYING
+  } else {
+    player.pauseVideo();
+  }
 });
 
 prevBtn.addEventListener('click', () => {
@@ -284,6 +326,39 @@ prevBtn.addEventListener('click', () => {
 nextBtn.addEventListener('click', () => {
   changeStation('next');
 });
+
+// Add touch events for navigation buttons on mobile
+if (isMobile) {
+  prevBtn.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    prevBtn.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+      prevBtn.style.transform = '';
+    }, 150);
+    changeStation('prev');
+  });
+  
+  nextBtn.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    nextBtn.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+      nextBtn.style.transform = '';
+    }, 150);
+    changeStation('next');
+  });
+  
+  menuToggle.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    menuToggle.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+      menuToggle.style.transform = '';
+    }, 150);
+    toggleMenu();
+  });
+}
 
 menuToggle.addEventListener('click', () => {
   toggleMenu();
@@ -749,4 +824,18 @@ window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 drawWaveform();
 
-window.addEventListener('pointerdown', () => loadYT(), {once:true});
+// Initialize YouTube API on first user interaction
+if (isMobile) {
+  // On mobile, wait for user interaction before loading YouTube API
+  const initOnInteraction = () => {
+    loadYT();
+    document.removeEventListener('touchstart', initOnInteraction);
+    document.removeEventListener('click', initOnInteraction);
+  };
+  
+  document.addEventListener('touchstart', initOnInteraction, { once: true });
+  document.addEventListener('click', initOnInteraction, { once: true });
+} else {
+  // On desktop, load immediately
+  window.addEventListener('pointerdown', () => loadYT(), {once:true});
+}

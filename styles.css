@@ -245,11 +245,15 @@ button.reset{all:unset}
   .icon {
     width: 48px;
     height: 48px;
+    min-height: 48px;
+    min-width: 48px;
   }
   
   .icon.small {
     width: 40px;
     height: 40px;
+    min-height: 40px;
+    min-width: 40px;
   }
   
   .menu-toggle {
@@ -257,6 +261,8 @@ button.reset{all:unset}
     height: 36px;
     top: 15px;
     left: 15px;
+    min-height: 36px;
+    min-width: 36px;
   }
   
   .station-menu {
@@ -268,6 +274,9 @@ button.reset{all:unset}
   .station-item {
     padding: 10px 0;
     font-size: 13px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
   }
   
   .title {
@@ -276,6 +285,17 @@ button.reset{all:unset}
   
   .hint {
     font-size: 11px;
+  }
+  
+  /* Ensure proper touch targets */
+  button {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Prevent zoom on double tap */
+  * {
+    touch-action: manipulation;
   }
 }
 
